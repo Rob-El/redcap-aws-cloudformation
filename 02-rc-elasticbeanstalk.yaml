@@ -89,6 +89,7 @@ Parameters:
     AllowedValues:
       - t3.nano
       - t3.micro
+      - t3a.micro      
       - t3.small
       - t3.medium
       - t3.large
@@ -114,7 +115,7 @@ Parameters:
       - r5.16xlarge
       - r5.24xlarge
     ConstraintDescription: Must be a valid Amazon EC2 instance type.
-    Default: t3.micro
+    Default: t3a.micro
     Description: The Amazon EC2 instance type for your web instances.
     Type: String
   PHPVersion:
@@ -356,6 +357,12 @@ Resources:
         - Namespace: aws:autoscaling:launchconfiguration
           OptionName: SSHSourceRestriction
           Value: 'tcp, 22, 22, 127.0.0.1/32'
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: DisableIMDSv1
+          Value: 'true'
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: RootVolumeType
+          Value: 'gp3'           
         - Namespace: aws:autoscaling:trigger
           OptionName: MeasureName
           Value: CPUUtilization
@@ -433,7 +440,17 @@ Resources:
           Value: HTTPS          
         - Namespace: aws:elasticbeanstalk:environment:process:https
           OptionName: StickinessEnabled
-          Value: true  
+          Value: true
+        - Namespace: aws:elasticbeanstalk:cloudwatch:logs
+          OptionName: StreamLogs
+          Value: true
+        - Namespace: aws:elasticbeanstalk:cloudwatch:logs
+          OptionName: DeleteOnTerminate
+          Value: true
+        - Namespace: aws:elasticbeanstalk:cloudwatch:logs
+          OptionName: RetentionInDays
+          Value: 7
+
 
 
 
@@ -483,6 +500,12 @@ Resources:
         - Namespace: aws:autoscaling:launchconfiguration
           OptionName: SSHSourceRestriction
           Value: 'tcp, 22, 22, 127.0.0.1/32'
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: DisableIMDSv1
+          Value: 'true'
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: RootVolumeType
+          Value: 'gp3'              
         - Namespace: aws:autoscaling:trigger
           OptionName: MeasureName
           Value: CPUUtilization
@@ -552,6 +575,15 @@ Resources:
         - Namespace: aws:elasticbeanstalk:environment:process:https
           OptionName: StickinessEnabled
           Value: true 
+        - Namespace: aws:elasticbeanstalk:cloudwatch:logs
+          OptionName: StreamLogs
+          Value: true
+        - Namespace: aws:elasticbeanstalk:cloudwatch:logs
+          OptionName: DeleteOnTerminate
+          Value: true
+        - Namespace: aws:elasticbeanstalk:cloudwatch:logs
+          OptionName: RetentionInDays
+          Value: 7
 
 
 
@@ -831,7 +863,7 @@ Resources:
                           awsregion=${awszone::-1}
                           device='/dev/sdh'
                           instanceId=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
-                          volumeId=$(aws ec2 create-volume --size 4 --region $awsregion --availability-zone $awszone --volume-type standard --encrypted --query VolumeId --output=text)
+                          volumeId=$(aws ec2 create-volume --size 4 --region $awsregion --availability-zone $awszone --volume-type gp3 --iops 3000 --encrypted --query VolumeId --output=text)
                           aws ec2 wait volume-available --region $awsregion --volume-ids $volumeId
                           aws ec2 attach-volume --volume-id $volumeId --instance-id $instanceId --device $device --region $awsregion
                           aws ec2 wait volume-in-use --region $awsregion --volume-ids $volumeId
@@ -912,10 +944,13 @@ Resources:
           zip -r redcap-eb.zip .
           #Put the ammended source file back in S3 so that Elastic Beanstalk can pick it up and deploy it
           aws s3 mb s3://${EBBucket}
+          aws s3api put-bucket-encryption --bucket ${EBBucket} --server-side-encryption-configuration '{ "Rules": [ { "ApplyServerSideEncryptionByDefault": { "SSEAlgorithm": "AES256" } } ] }'
+          aws s3api put-public-access-block --bucket ${EBBucket} --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true          
           aws s3 cp redcap-eb.zip s3://${EBBucket}
           #Create an encrypted S3 Bucket to be the REDCap File Repository
           aws s3 mb s3://${S3FileRepositoryBucket}
           aws s3api put-bucket-encryption --bucket ${S3FileRepositoryBucket} --server-side-encryption-configuration '{ "Rules": [ { "ApplyServerSideEncryptionByDefault": { "SSEAlgorithm": "AES256" } } ] }'
+          aws s3api put-public-access-block --bucket ${S3FileRepositoryBucket} --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
           #Tell Elastic Beanstalk what the latest PHP 7 solution stack is 
           echo ${PHPVersion}
           export SOLUTION_STACK=`aws elasticbeanstalk list-available-solution-stacks --region ${AWS::Region} | grep -v "SolutionStackName" | grep "PHP ${PHPVersion}" | grep "Linux 2 " |  head -1 | cut -d \" -f2`
