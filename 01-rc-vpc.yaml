@@ -69,7 +69,13 @@ Parameters:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
     Default: 10.1.5.0/24
-
+  EBEndpoint:
+    AllowedPattern: ^([a-zA-Z0-9-])*$
+    Description: '[ REQUIRED ] The unique name to use for your Elastic Beanstalk URL (will be rendered http://(EBEndpoint).(region).elasticbeanstalk.com).  You can use the "nslookup" to see if an endpoint is in use.'
+    ConstraintDescription: 'This name must be between 4 and 40 characters and contain only letters, numbers, and/or a hyphen'
+    MaxLength: 40
+    MinLength: 4    
+    Type: String
 
 
 
@@ -85,7 +91,7 @@ Conditions:
     - !Equals [ false, !Ref UseRoute53Boolean ]
 
 Resources:
-  vpc27bc775f:
+  REDCapVPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: !Ref VPCcidr
@@ -95,95 +101,181 @@ Resources:
       Tags:
         - Key: Name
           Value: Project REDCap VPC
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-vpc          
 
 
 #Defines Internet Connectivity
-  igw8d9149f4:
+  REDCapIGw:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
           Value: PHP IGW
-  gw1:
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-igw
+
+  REDCapGWAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId: !Ref 'vpc27bc775f'
-      InternetGatewayId: !Ref 'igw8d9149f4'
-
-
+      VpcId: !Ref 'REDCapVPC'
+      InternetGatewayId: !Ref 'REDCapIGw'
 
 #Defines NAT Gateway so that the Elastic Beanstalk servers and the temporary EC2 server can talk to the Internet
   NAT:
-    DependsOn: gw1
+    DependsOn: REDCapGWAttachment
     Type: AWS::EC2::NatGateway
     Properties:
       AllocationId: !GetAtt 'EIP.AllocationId'
-      SubnetId: !Ref 'subnetd3e13a98'
+      SubnetId: !Ref 'REDCapPublicASubnet'
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-nat-gw
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-nat-gw     
+
   EIP:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
-
-
-
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-eip
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-eip
 
   #Defines two availability zones of subnets for the three tier network architecture
-  subnet3d504d67:
+  REDCapDataBSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: !Ref d2cidr
       AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "b" ] ]
-      VpcId: !Ref 'vpc27bc775f'
+      VpcId: !Ref 'REDCapVPC'
       Tags:
         - Key: Name
           Value: Data B
-  subnet864d50dc:
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-subnet-data-b             
+  REDCapAppBSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: !Ref a2cidr
       AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "b" ] ]
-      VpcId: !Ref 'vpc27bc775f'
+      VpcId: !Ref 'REDCapVPC'
       Tags:
         - Key: Name
           Value: App B
-  subnet7aee3531:
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-subnet-app-b         
+  REDCapDataASubnet:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: !Ref d1cidr
       AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "a" ] ]
-      VpcId: !Ref 'vpc27bc775f'
+      VpcId: !Ref 'REDCapVPC'
       Tags:
         - Key: Name
           Value: Data A
-  subnetbae43ff1:
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-subnet-data-a              
+  REDCapAppASubnet:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: !Ref a1cidr
       AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "a" ] ]
-      VpcId: !Ref 'vpc27bc775f'
+      VpcId: !Ref 'REDCapVPC'
       Tags:
         - Key: Name
           Value: App A
-  subnetd3e13a98:
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-subnet-app-a            
+  REDCapPublicASubnet:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: !Ref p1cidr
       AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "a" ] ]
       MapPublicIpOnLaunch: 'True'
-      VpcId: !Ref 'vpc27bc775f'
+      VpcId: !Ref 'REDCapVPC'
       Tags:
         - Key: Name
           Value: Public A
-  subnet2c5c4176:
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-subnet-public-a          
+  REDCapPublicBSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: !Ref p2cidr
       AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "b" ] ]
       MapPublicIpOnLaunch: 'True'
-      VpcId: !Ref 'vpc27bc775f'
+      VpcId: !Ref 'REDCapVPC'
       Tags:
         - Key: Name
           Value: Public B
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-vpc-gw
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-subnet-public-b          
   
 
 
@@ -194,7 +286,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group for Load Balancers
-      VpcId: !Ref 'vpc27bc775f'
+      VpcId: !Ref 'REDCapVPC'
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: '443'
@@ -207,13 +299,22 @@ Resources:
       Tags:
         - Key: Name
           Value: Public Security Group
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-public-sg             
+
   PublicSGNoSSL:
     Condition: NoDeployACM
     DependsOn: EIP
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group for Load Balancers
-      VpcId: !Ref 'vpc27bc775f'
+      VpcId: !Ref 'REDCapVPC'
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: '443'
@@ -226,19 +327,37 @@ Resources:
       Tags:
         - Key: Name
           Value: Public Security Group
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-public-sg
+
   AppSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group for Application Servers
-      VpcId: !Ref 'vpc27bc775f'
+      VpcId: !Ref 'REDCapVPC'
       Tags:
         - Key: Name
           Value: App Security Group
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-app-sg
+
   DataSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group for Databases
-      VpcId: !Ref 'vpc27bc775f'
+      VpcId: !Ref 'REDCapVPC'
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: '3306'
@@ -247,67 +366,101 @@ Resources:
       Tags:
         - Key: Name
           Value: DB Security Group
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-db-sg            
 
 
   
 #Route tables and route definitions for the three tiered network architecture
-  Route:
+  REDCapPrivateRoute:
     Type: AWS::EC2::Route
     Properties:
-      RouteTableId: !Ref 'rtb425bda38'
+      RouteTableId: !Ref 'REDCapPrivateRouteTable'
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref 'NAT'
-  rtb425bda38:
+
+  REDCapPrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref 'vpc27bc775f'
-  rtb3756d74d:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref 'vpc27bc775f'
+      VpcId: !Ref 'REDCapVPC'
       Tags:
         - Key: Name
-          Value: Public  
-  subnetroute1:
+          Value: Private
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-private-routetable              
+
+  REDCapDataSubnetARoute:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref 'rtb3756d74d'
-      SubnetId: !Ref 'subnet2c5c4176'
-  subnetroute2:
+      RouteTableId: !Ref 'REDCapPrivateRouteTable'
+      SubnetId: !Ref 'REDCapDataASubnet'
+
+  REDCapDataSubnetBRoute:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref 'rtb3756d74d'
-      SubnetId: !Ref 'subnetd3e13a98'
-  subnetroute3:
+      RouteTableId: !Ref 'REDCapPrivateRouteTable'
+      SubnetId: !Ref 'REDCapDataBSubnet'      
+
+  REDCapAppSubnetARoute:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref 'rtb425bda38'
-      SubnetId: !Ref 'subnet3d504d67'
-  subnetroute4:
+      RouteTableId: !Ref 'REDCapPrivateRouteTable'
+      SubnetId: !Ref 'REDCapAppASubnet'   
+
+  REDCapAppSubnetBRoute:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref 'rtb425bda38'
-      SubnetId: !Ref 'subnet864d50dc'
-  subnetroute5:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref 'rtb425bda38'
-      SubnetId: !Ref 'subnet7aee3531'
-  subnetroute6:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref 'rtb425bda38'
-      SubnetId: !Ref 'subnetbae43ff1'
-  route2:
+      RouteTableId: !Ref 'REDCapPrivateRouteTable'
+      SubnetId: !Ref 'REDCapAppBSubnet'             
+
+
+  REDCapPublicRoute:
     Type: AWS::EC2::Route
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
-      RouteTableId: !Ref 'rtb3756d74d'
-      GatewayId: !Ref 'igw8d9149f4'
-    DependsOn: gw1  
+      RouteTableId: !Ref 'REDCapPublicRouteTable'
+      GatewayId: !Ref 'REDCapIGw'
+    DependsOn: REDCapGWAttachment         
 
+  REDCapPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'REDCapVPC'
+      Tags:
+        - Key: Name
+          Value: Public
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-public-routetable            
 
+  REDCapPublicSubnetARoute:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref 'REDCapPublicRouteTable'
+      SubnetId: !Ref 'REDCapPublicASubnet'          
 
+  REDCapPublicSubnetBRoute:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref 'REDCapPublicRouteTable'
+      SubnetId: !Ref 'REDCapPublicBSubnet'
 
 
 #Elastic Beanstalk IAM Roles
@@ -350,6 +503,18 @@ Resources:
                 Resource:
                   - '*'
       Path: /
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-service-role
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-service-role          
+
   InstanceProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
@@ -414,8 +579,8 @@ Resources:
                       - ':s3:::cf-templates-*'
                       - !Ref 'AWS::AccountId'
                       - '/*'
-                  - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'subnetd3e13a98'] ], '-redcapebapp' ] ]
-                  - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'subnetd3e13a98'] ], '-redcapebapp', '/*' ] ]
+                  - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcapebapp' ] ]
+                  - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcapebapp', '/*' ] ]
               - Sid: MetricsAccess
                 Action:
                   - 'cloudwatch:PutMetricData'
@@ -477,6 +642,22 @@ Resources:
                 Effect: Allow
                 Resource: '*'
       Path: /
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-instance-role
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-instance-role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "Allowed for REDCap"            
 
 
 
@@ -497,6 +678,17 @@ Resources:
             Action:
               - sts:AssumeRole
       Path: /
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-ec2-ssm-role
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-ec2-ssm-role           
   EC2RolePolicies:
     Type: AWS::IAM::Policy
     Properties:
@@ -511,10 +703,10 @@ Resources:
             Resource: 
               - !Join [ "", [ 'arn:aws:s3:::', !Ref RedcapS3Bucket ] ]
               - !Join [ "", [ 'arn:aws:s3:::', !Ref RedcapS3Bucket, '/*' ] ]              
-              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'subnetd3e13a98'] ], '-redcapebapp' ] ]
-              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'subnetd3e13a98'] ], '-redcapebapp', '/*' ] ]
-              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'subnetd3e13a98'] ], '-redcaprepository' ] ]
-              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'subnetd3e13a98'] ], '-redcaprepository', '/*' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcapebapp' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcapebapp', '/*' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcaprepository' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcaprepository', '/*' ] ]
           - Effect: Allow
             Action:
               - "elasticbeanstalk:ListAvailableSolutionStacks"
@@ -529,12 +721,19 @@ Resources:
             Resource: 'arn:aws:logs:*:*:*'
       Roles:
         - !Ref 'EC2Role'
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W12
+            reason: "Allowed for REDCap"        
   EC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Path: /
       Roles:
         - !Ref 'EC2Role'
+
+     
 
   # '${AWS::AccountId}-${subnetpublica}-redcaprepository'
   #IAM User and Access/Secret Key to be used by REDCap to access S3 as a File Repository
@@ -549,14 +748,200 @@ Resources:
               Action: 
                 - "s3:*"
               Resource: 
-              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'subnetd3e13a98'] ], '-redcaprepository' ] ]
-              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'subnetd3e13a98'] ], '-redcaprepository', '/*' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcaprepository' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcaprepository', '/*' ] ]
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-user
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-user                 
   REDCapAccessKey:
     Type: AWS::IAM::AccessKey
     Properties:
       UserName:
         !Ref REDCapUser
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: F10
+            reason: "Generally LMU allows hosts to access whatever site is needed"
+          - id: F2000
+            reason: "Names should be static so they can be used in other templates"           
 
+  # Lambda to clean up Default Security Group per AWS - https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-2
+  # Custom resource
+  REDCapCleanUpDefaultSG:
+    DependsOn: REDCapCleanUpDefaultSGFunctionLogGroup
+    Type: Custom::CleanUpDefaultSG
+    Properties:
+      ServiceToken: !GetAtt REDCapCleanUpDefaultSGFunction.Arn
+      DefaultSG: !GetAtt REDCapVPC.DefaultSecurityGroup
+
+  # Lambda Function
+  REDCapCleanUpDefaultSGFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      FunctionName: !Sub "REDCap-lambda-cleanupdefaultsg-${REDCapVPC}"
+      Description: Cleans up default security group and tags it
+      Runtime: python3.9
+      Timeout: 300
+      Role: !GetAtt REDCapCleanUpDefaultSGFunctionRole.Arn
+      Layers:
+        - "arn:aws:lambda:us-west-2:905652290449:layer:LMUBaseline-python-library:5"      
+      Code:
+        ZipFile: |
+          import boto3 
+          import json 
+          import os
+          import logging
+          from crhelper import CfnResource
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          helper = CfnResource()
+
+          VPC_NAME = os.environ['vpc_name']
+
+          # boto3 client 
+          client = boto3.client('ec2') 
+
+          @helper.create
+          @helper.update
+
+          def create_update(event, context):
+              default_sg = event["ResourceProperties"]["DefaultSG"]
+              logger.info("Default security group id is:{}".format(default_sg)) 
+              try:
+                  response = client.revoke_security_group_egress(
+                      GroupId=default_sg,
+                      IpPermissions=[
+                          {
+                              'IpProtocol': '-1',
+                              'IpRanges': [
+                                  {
+                                      'CidrIp': '0.0.0.0/0'
+                                  }
+                              ]
+                          }
+                      ]        
+                  )
+              except Exception as e: 
+                  logger.error("Not able to revoke egress rule due to the following error: {}".format(e)) 
+                  raise
+              try:
+                  response = client.revoke_security_group_ingress(
+                      GroupId=default_sg,
+                      IpPermissions=[
+                          {
+                              'IpProtocol': '-1',
+                              'UserIdGroupPairs': [
+                                  {
+                                      'GroupId': default_sg
+                                  }
+                              ]
+                          }
+                      ]
+                  )    
+              except Exception as e: 
+                  logger.error("Not able to revoke ingress rule due to the following error: {}".format(e)) 
+                  raise
+              
+              logger.info("Egress and Ingress rules have been deleted")
+
+          @helper.delete
+          def no_op(_, __):
+              pass
+
+          def lambda_handler(event, context):
+              helper(event, context)
+      Environment:
+        Variables:
+          vpc_name: !Ref REDCapVPC
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-sg-cleanup-lambda
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-sg-cleanup-lambda            
+ 
+
+  REDCapCleanUpDefaultSGFunctionLogGroup:
+    DependsOn: REDCapCleanUpDefaultSGFunction
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${REDCapCleanUpDefaultSGFunction}
+      RetentionInDays: 30
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-sg-cleanup-loggroup
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-sg-cleanup-loggroup         
+
+  # Lambda Function Role
+  REDCapCleanUpDefaultSGFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "REDCap-role-cleanupdefaultsg-${REDCapVPC}-${AWS::Region}"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Sid: LambdaAccess
+          Effect: Allow
+          Principal:
+            Service:
+              - lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub "REDCap-policy-cleanupdefaultsg-${REDCapVPC}-${AWS::Region}"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+              - Effect: Allow
+                Action:
+                  - ec2:RevokeSecurityGroupEgress
+                  - ec2:RevokeSecurityGroupIngress
+                  - ec2:CreateTags
+                Resource: !Sub "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:security-group/${REDCapVPC.DefaultSecurityGroup}"
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-sg-cleanup-role
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-sg-cleanup-role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W28
+            reason: "Names should be static so they can be used in other templates"
+           
 
 
 
@@ -564,19 +949,19 @@ Resources:
 #Return the created resources to the Master template
 Outputs:
   VPCId:
-    Value: !Ref 'vpc27bc775f'
+    Value: !Ref 'REDCapVPC'
   SubnetPublicA:
-    Value: !Ref 'subnetd3e13a98'
+    Value: !Ref 'REDCapPublicASubnet'
   SubnetPublicB:
-    Value: !Ref 'subnet2c5c4176'
+    Value: !Ref 'REDCapPublicBSubnet'
   SubnetAppA:
-    Value: !Ref 'subnetbae43ff1'
+    Value: !Ref 'REDCapAppASubnet'
   SubnetAppB:
-    Value: !Ref 'subnet864d50dc'
+    Value: !Ref 'REDCapAppBSubnet'
   SubnetDataA:
-    Value: !Ref 'subnet7aee3531'
+    Value: !Ref 'REDCapDataASubnet'
   SubnetDataB:
-    Value: !Ref 'subnet3d504d67'
+    Value: !Ref 'REDCapDataBSubnet'
   SGPublic:
     Value: !If [ DeployACM, !Ref 'PublicSGSSL', !Ref 'PublicSGNoSSL' ]
   SGApp:
