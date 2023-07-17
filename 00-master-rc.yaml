@@ -420,11 +420,22 @@ Resources:
         - HostedZoneId: !Ref HostedZoneIda
           DomainName: !Join ['', [!Ref DomainName, '.', !Ref HostedZoneName]]
       ValidationMethod: DNS
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-certificate
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-certificate     
   
   VPCStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/redcap-aws-cloudformation/01-rc-vpc.yaml
+      TemplateURL: https://s3.amazonaws.com/lmu-redcap-aws-cloudformation/01-rc-vpc.yaml
       Parameters:
         AccessCidr: !Ref 'AccessCidr'
         RedcapS3Bucket: !Ref 'RedcapS3Bucket'
@@ -437,6 +448,19 @@ Resources:
         a2cidr: !Ref a2cidr
         d1cidr: !Ref d1cidr
         d2cidr: !Ref d2cidr
+        EBEndpoint: !Ref EBEndpoint
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-cloudformation-stack
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-cloudformation-stack    
+
   redcapelasticbeanstalk:
     DependsOn: [ VPCStack ]
     Type: AWS::CloudFormation::Stack
@@ -522,7 +546,19 @@ Resources:
           !GetAtt 'VPCStack.Outputs.EBInstanceProfile'
         TempEC2InstanceProfile:
           !GetAtt 'VPCStack.Outputs.TempEC2InstanceProfile'
-      TemplateURL: https://s3.amazonaws.com/redcap-aws-cloudformation/02-rc-elasticbeanstalk.yaml
+      TemplateURL: https://s3.amazonaws.com/lmu-redcap-aws-cloudformation/02-rc-elasticbeanstalk.yaml
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-cloudformation-stack
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-cloudformation-stack 
+
   route53:
     Condition: DeployRoute53
     DependsOn: redcapelasticbeanstalk
@@ -537,7 +573,19 @@ Resources:
           !Ref HostedZoneName
         DomainName:
           !Ref DomainName
-      TemplateURL: https://s3.amazonaws.com/redcap-aws-cloudformation/03-rc-route53.yaml
+      TemplateURL: https://s3.amazonaws.com/lmu-redcap-aws-cloudformation/03-rc-route53.yaml
+      Tags:      
+        - Key: Name
+          Value: !Sub ${EBEndpoint}-cloudformation-stack
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-cloudformation-stack 
+
 
 Outputs:
   REDCapURL:
