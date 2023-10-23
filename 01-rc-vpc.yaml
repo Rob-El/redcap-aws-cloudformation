@@ -38,37 +38,47 @@ Parameters:
     Description: (optional to change) CIDR IP Range for your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.0.0/16
+    Default: 10.105.32.0/20
   p1cidr:
     Description: (optional to change) CIDR IP Range for the public subnet in AZ 'a' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.0.0/24
+    Default: 10.105.34.0/24
   p2cidr:
     Description: (optional to change) CIDR IP Range for the public subnet in AZ 'b' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.1.0/24
+    Default: 10.105.35.0/24
   a1cidr:
     Description: (optional to change) CIDR IP Range for the application subnet in AZ 'a' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.2.0/24
+    Default: 10.105.36.0/24
   a2cidr:
     Description: (optional to change) CIDR IP Range for the application subnet in AZ 'b' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.3.0/24
+    Default: 10.105.37.0/24
   d1cidr:
-    Description: (optional to change) CIDR IP Range for the database subnet in AZ 'b' of your REDCap VPC.
+    Description: (optional to change) CIDR IP Range for the database subnet in AZ 'a' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.4.0/24
+    Default: 10.105.38.0/24
   d2cidr:
     Description: (optional to change) CIDR IP Range for the database subnet in AZ 'b' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.5.0/24
+    Default: 10.105.39.0/24
+  GWLB1CIDR:
+    Description: (optional to change) CIDR IP Range for the GWLB subnet in AZ 'a' of your REDCap VPC.
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    Type: String
+    Default: 10.105.32.0/24
+  GWLB2CIDR:
+    Description: (optional to change) CIDR IP Range for the GWLB subnet in AZ 'b' of your REDCap VPC.
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    Type: String
+    Default: 10.105.33.0/24    
   EBEndpoint:
     AllowedPattern: ^([a-zA-Z0-9-])*$
     Description: '[ REQUIRED ] The unique name to use for your Elastic Beanstalk URL (will be rendered http://(EBEndpoint).(region).elasticbeanstalk.com).  You can use the "nslookup" to see if an endpoint is in use.'
@@ -76,6 +86,12 @@ Parameters:
     MaxLength: 40
     MinLength: 4    
     Type: String
+
+  VpcEndpointService:
+    Description: VPC Endpoint Service for REDCap account
+    Type: String
+    Default: vpce-svc-04c4882b05a462f15
+
 
 
 
@@ -100,7 +116,7 @@ Resources:
       EnableDnsHostnames: 'false'
       Tags:
         - Key: Name
-          Value: Project REDCap VPC
+          Value: !Sub ${EBEndpoint}-vpc
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -117,7 +133,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: PHP IGW
+          Value: !Sub ${EBEndpoint}-igw
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -169,15 +185,16 @@ Resources:
           Value: !Sub ${EBEndpoint}-eip
 
   #Defines two availability zones of subnets for the three tier network architecture
-  REDCapDataBSubnet:
+
+  REDCapDataASubnet:
     Type: AWS::EC2::Subnet
     Properties:
-      CidrBlock: !Ref d2cidr
-      AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "b" ] ]
-      VpcId: !Ref 'REDCapVPC'
+      CidrBlock: !Ref d1cidr
+      AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "a" ] ]
+      VpcId: !Ref REDCapVPC
       Tags:
         - Key: Name
-          Value: Data B
+          Value: !Sub ${EBEndpoint} Data A
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -185,16 +202,51 @@ Resources:
         - Key: ApplicationName
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-subnet-data-b             
+          Value: !Sub ${EBEndpoint}-subnet-data-a  
+  REDCapDataBSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref d2cidr
+      AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "b" ] ]
+      VpcId: !Ref REDCapVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EBEndpoint} Data B
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-subnet-data-b  
+
+  REDCapAppASubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref a1cidr
+      AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "a" ] ]
+      VpcId: !Ref REDCapVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EBEndpoint} App A
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-subnet-app-a   
   REDCapAppBSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: !Ref a2cidr
       AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "b" ] ]
-      VpcId: !Ref 'REDCapVPC'
+      VpcId: !Ref REDCapVPC
       Tags:
         - Key: Name
-          Value: App B
+          Value: !Sub ${EBEndpoint} App B
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -203,50 +255,18 @@ Resources:
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
           Value: !Sub ${EBEndpoint}-subnet-app-b         
-  REDCapDataASubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      CidrBlock: !Ref d1cidr
-      AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "a" ] ]
-      VpcId: !Ref 'REDCapVPC'
-      Tags:
-        - Key: Name
-          Value: Data A
-        - Key: Owner
-          Value: David.Scozzaro@lmu.edu
-        - Key: Team
-          Value: ResearchEducation
-        - Key: ApplicationName
-          Value: !Sub ${EBEndpoint}
-        - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-subnet-data-a              
-  REDCapAppASubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      CidrBlock: !Ref a1cidr
-      AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "a" ] ]
-      VpcId: !Ref 'REDCapVPC'
-      Tags:
-        - Key: Name
-          Value: App A
-        - Key: Owner
-          Value: David.Scozzaro@lmu.edu
-        - Key: Team
-          Value: ResearchEducation
-        - Key: ApplicationName
-          Value: !Sub ${EBEndpoint}
-        - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-subnet-app-a            
+            
+         
   REDCapPublicASubnet:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: !Ref p1cidr
       AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "a" ] ]
-      MapPublicIpOnLaunch: 'True'
-      VpcId: !Ref 'REDCapVPC'
+      MapPublicIpOnLaunch: True
+      VpcId: !Ref REDCapVPC
       Tags:
         - Key: Name
-          Value: Public A
+          Value: !Sub ${EBEndpoint} Public A
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -260,14 +280,11 @@ Resources:
     Properties:
       CidrBlock: !Ref p2cidr
       AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "b" ] ]
-      MapPublicIpOnLaunch: 'True'
-      VpcId: !Ref 'REDCapVPC'
+      MapPublicIpOnLaunch: True
+      VpcId: !Ref REDCapVPC
       Tags:
         - Key: Name
-          Value: Public B
-      Tags:      
-        - Key: Name
-          Value: !Sub ${EBEndpoint}-vpc-gw
+          Value: !Sub ${EBEndpoint} Public B
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -275,7 +292,44 @@ Resources:
         - Key: ApplicationName
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-subnet-public-b          
+          Value: !Sub ${EBEndpoint}-subnet-public-b
+          
+  REDCapGWLBASubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref GWLB1CIDR
+      AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "a" ] ]
+      MapPublicIpOnLaunch: True
+      VpcId: !Ref REDCapVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EBEndpoint} GWLB A
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-subnet-gwlb-a          
+  REDCapGWLBBSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref GWLB2CIDR
+      AvailabilityZone: !Join [ "", [ !Ref 'AWS::Region', "b" ] ]
+      MapPublicIpOnLaunch: True
+      VpcId: !Ref REDCapVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EBEndpoint} GWLB B
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-subnet-bwlb-b               
   
 
 
@@ -286,7 +340,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group for Load Balancers
-      VpcId: !Ref 'REDCapVPC'
+      VpcId: !Ref REDCapVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: '443'
@@ -298,7 +352,7 @@ Resources:
           CidrIp: !Ref 'AccessCidr'
       Tags:
         - Key: Name
-          Value: Public Security Group
+          Value: !Sub ${EBEndpoint} Public Security Group
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -326,7 +380,7 @@ Resources:
           CidrIp: !Ref 'AccessCidr'
       Tags:
         - Key: Name
-          Value: Public Security Group
+          Value: !Sub ${EBEndpoint} Public Security Group
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -343,7 +397,7 @@ Resources:
       VpcId: !Ref 'REDCapVPC'
       Tags:
         - Key: Name
-          Value: App Security Group
+          Value: !Sub ${EBEndpoint} App Security Group
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -365,7 +419,7 @@ Resources:
         SourceSecurityGroupId: !Ref 'AppSG'
       Tags:
         - Key: Name
-          Value: DB Security Group
+          Value: !Sub ${EBEndpoint} DB Security Group
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -391,7 +445,7 @@ Resources:
       VpcId: !Ref 'REDCapVPC'
       Tags:
         - Key: Name
-          Value: Private
+          Value: !Sub ${EBEndpoint} Private
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -440,7 +494,7 @@ Resources:
       VpcId: !Ref 'REDCapVPC'
       Tags:
         - Key: Name
-          Value: Public
+          Value: !Sub ${EBEndpoint} Public
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -461,6 +515,77 @@ Resources:
     Properties:
       RouteTableId: !Ref 'REDCapPublicRouteTable'
       SubnetId: !Ref 'REDCapPublicBSubnet'
+
+# GWLB routes and route tables      
+
+  REDCapGWLBRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref 'REDCapGWLBRouteTable'
+      GatewayId: !Ref 'REDCapIGw'
+    DependsOn: REDCapGWAttachment         
+
+  REDCapGWLBRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'REDCapVPC'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EBEndpoint} GWLB
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-public-routetable            
+
+  REDCapGWLBSubnetARoute:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref 'REDCapGWLBRouteTable'
+      SubnetId: !Ref 'REDCapGWLBASubnet'          
+
+  REDCapGWLBSubnetBRoute:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref 'REDCapGWLBRouteTable'
+      SubnetId: !Ref 'REDCapGWLBBSubnet'      
+
+# GWLB Endpoints
+
+  GwlbEndpoint1:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref REDCapVPC
+      ServiceName: !Join
+        - ''
+        - - !If [IsChina, cn.com.amazonaws, com.amazonaws]
+          - .vpce.
+          - !Ref "AWS::Region"
+          - .
+          - !Ref VpcEndpointService
+      VpcEndpointType: GatewayLoadBalancer
+      SubnetIds:
+        - !Ref REDCapGWLBASubnet
+
+  GwlbEndpoint2:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref REDCapVPC
+      ServiceName: !Join
+        - ''
+        - - !If [IsChina, cn.com.amazonaws, com.amazonaws]
+          - .vpce.
+          - !Ref "AWS::Region"
+          - .
+          - !Ref VpcEndpointService
+      VpcEndpointType: GatewayLoadBalancer
+      SubnetIds:
+        - !Ref REDCapGWLBBSubnet
+
 
 
 #Elastic Beanstalk IAM Roles
@@ -581,6 +706,8 @@ Resources:
                       - '/*'
                   - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcapebapp' ] ]
                   - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcapebapp', '/*' ] ]
+                  - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapGWLBASubnet'] ], '-redcapebapp' ] ]
+                  - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapGWLBASubnet'] ], '-redcapebapp', '/*' ] ]
               - Sid: MetricsAccess
                 Action:
                   - 'cloudwatch:PutMetricData'
@@ -707,6 +834,10 @@ Resources:
               - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcapebapp', '/*' ] ]
               - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcaprepository' ] ]
               - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcaprepository', '/*' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapGWLBASubnet'] ], '-redcapebapp' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapGWLBASubnet'] ], '-redcapebapp', '/*' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapGWLBASubnet'] ], '-redcaprepository' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapGWLBASubnet'] ], '-redcaprepository', '/*' ] ]              
           - Effect: Allow
             Action:
               - "elasticbeanstalk:ListAvailableSolutionStacks"
@@ -750,6 +881,8 @@ Resources:
               Resource: 
               - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcaprepository' ] ]
               - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapPublicASubnet'] ], '-redcaprepository', '/*' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapGWLBASubnet'] ], '-redcaprepository' ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !Ref 'REDCapGWLBASubnet'] ], '-redcaprepository', '/*' ] ]
       Tags:      
         - Key: Name
           Value: !Sub ${EBEndpoint}-user
@@ -962,6 +1095,10 @@ Outputs:
     Value: !Ref 'REDCapDataASubnet'
   SubnetDataB:
     Value: !Ref 'REDCapDataBSubnet'
+  SubnetGWLBA:
+    Value: !Ref 'REDCapGWLBASubnet'
+  SubnetGWLBB:
+    Value: !Ref 'REDCapGWLBBSubnet'    
   SGPublic:
     Value: !If [ DeployACM, !Ref 'PublicSGSSL', !Ref 'PublicSGNoSSL' ]
   SGApp:

@@ -69,6 +69,9 @@ Metadata:
         - a2cidr
         - d1cidr
         - d2cidr
+        - GWLB1CIDR
+        - GWLB2CIDR
+        - VpcEndpointService
     
     ParameterLabels:
       EC2KeyName:
@@ -142,6 +145,12 @@ Metadata:
         default: Database Subnet A CIDR Range
       d2cidr:
         default: Database Subnet B CIDR Range
+      GWLB1CIDR:
+        default: GWLB Subnet A CIDR Range
+      GWLB2CIDR:
+        default: GWLB Subnet B CIDR Range
+      VpcEndpointService:
+        default: VPC Endpoint Service 
 
 
 
@@ -367,37 +376,51 @@ Parameters:
     Description: (optional to change) CIDR IP Range for your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.0.0/16
+    Default: 10.105.32.0/20
   p1cidr:
     Description: (optional to change) CIDR IP Range for the public subnet in AZ 'a' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.0.0/24
+    Default: 10.105.34.0/24
   p2cidr:
     Description: (optional to change) CIDR IP Range for the public subnet in AZ 'b' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.1.0/24
+    Default: 10.105.35.0/24
   a1cidr:
     Description: (optional to change) CIDR IP Range for the application subnet in AZ 'a' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.2.0/24
+    Default: 10.105.36.0/24
   a2cidr:
     Description: (optional to change) CIDR IP Range for the application subnet in AZ 'b' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.3.0/24
+    Default: 10.105.37.0/24
   d1cidr:
-    Description: (optional to change) CIDR IP Range for the database subnet in AZ 'b' of your REDCap VPC.
+    Description: (optional to change) CIDR IP Range for the database subnet in AZ 'a' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.4.0/24
+    Default: 10.105.38.0/24
   d2cidr:
     Description: (optional to change) CIDR IP Range for the database subnet in AZ 'b' of your REDCap VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-    Default: 10.1.5.0/24
+    Default: 10.105.39.0/24
+  GWLB1CIDR:
+    Description: (optional to change) CIDR IP Range for the GWLB subnet in AZ 'a' of your REDCap VPC.
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    Type: String
+    Default: 10.105.32.0/24
+  GWLB2CIDR:
+    Description: (optional to change) CIDR IP Range for the GWLB subnet in AZ 'b' of your REDCap VPC.
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    Type: String
+    Default: 10.105.33.0/24
+  VpcEndpointService:
+    Description: VPC Endpoint Service for REDCap account
+    Type: String
+    Default: vpce-svc-04c4882b05a462f15    
 
 
 
@@ -437,10 +460,10 @@ Resources:
     Properties:
       TemplateURL: https://s3.amazonaws.com/lmu-redcap-aws-cloudformation/01-rc-vpc.yaml
       Parameters:
-        AccessCidr: !Ref 'AccessCidr'
-        RedcapS3Bucket: !Ref 'RedcapS3Bucket'
-        UseACMBoolean: !Ref 'UseACMBoolean'
-        UseRoute53Boolean: !Ref 'UseRoute53Boolean'
+        AccessCidr: !Ref AccessCidr
+        RedcapS3Bucket: !Ref RedcapS3Bucket
+        UseACMBoolean: !Ref UseACMBoolean
+        UseRoute53Boolean: !Ref UseRoute53Boolean
         VPCcidr: !Ref VPCcidr
         p1cidr: !Ref p1cidr
         p2cidr: !Ref p2cidr
@@ -448,7 +471,10 @@ Resources:
         a2cidr: !Ref a2cidr
         d1cidr: !Ref d1cidr
         d2cidr: !Ref d2cidr
+        GWLB1CIDR: !Ref GWLB1CIDR
+        GWLB2CIDR: !Ref GWLB2CIDR
         EBEndpoint: !Ref EBEndpoint
+        VpcEndpointService: !Ref VpcEndpointService
       Tags:      
         - Key: Name
           Value: !Sub ${EBEndpoint}-cloudformation-stack
@@ -467,59 +493,37 @@ Resources:
     Properties:
       Parameters:
         EBBucket: !Join [ "", [ !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !GetAtt 'VPCStack.Outputs.SubnetPublicA'] ], '-redcapebapp' ] ]
-        SESUsername:
-          !Ref SESUsername
-        SESPassword:
-          !Ref SESPassword
-        SESRegion:
-          !Ref SESRegion
-        DatabaseMasterPassword:
-          !Ref DatabaseMasterPassword
-        DatabaseInstanceType:
-          !Ref DatabaseInstanceType
-        MultiAZDatabase:
-          !Ref MultiAZDatabase
+        SESUsername: !Ref SESUsername
+        SESPassword: !Ref SESPassword
+        SESRegion: !Ref SESRegion
+        DatabaseMasterPassword: !Ref DatabaseMasterPassword
+        DatabaseInstanceType: !Ref DatabaseInstanceType
+        MultiAZDatabase: !Ref MultiAZDatabase
         SslCertificate:
           !If [ DeployACM, !Ref certificate, '' ]
-        WebAsgMax:
-          !Ref WebAsgMax
-        WebAsgMin:
-          !Ref WebAsgMin
-        WebInstanceType:
-          !Ref WebInstanceType
-        PHPVersion:
-          !Ref PHPVersion
-        S3AccessKey:
-          !GetAtt 'VPCStack.Outputs.S3AccessKey'
-        S3SecretKey:
-          !GetAtt 'VPCStack.Outputs.S3SecretKey'
-        S3FileRepositoryBucket: !Join [ "", [ !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !GetAtt 'VPCStack.Outputs.SubnetPublicA'] ], '-redcaprepository' ] ]
-        EBEndpoint:
-          !Ref EBEndpoint
-        UseRoute53Boolean:
-          !Ref UseRoute53Boolean
-        UseACMBoolean:
-          !Ref UseACMBoolean
+        WebAsgMax: !Ref WebAsgMax
+        WebAsgMin: !Ref WebAsgMin
+        WebInstanceType: !Ref WebInstanceType
+        PHPVersion: !Ref PHPVersion
+        S3AccessKey: !GetAtt 'VPCStack.Outputs.S3AccessKey'
+        S3SecretKey: !GetAtt 'VPCStack.Outputs.S3SecretKey'
+        S3FileRepositoryBucket: 
+          !Join [ "", [ !Ref "AWS::AccountId", '-', !Select [ 1, !Split [ '-', !GetAtt 'VPCStack.Outputs.SubnetPublicA'] ], '-redcaprepository' ] ]
+        EBEndpoint: !Ref EBEndpoint
+        UseRoute53Boolean: !Ref UseRoute53Boolean
+        UseACMBoolean: !Ref UseACMBoolean
         HostedZoneName:
           !If [ DeployRoute53, !Ref HostedZoneName, '' ]
         DomainName:
           !If [ DeployRoute53, !Ref DomainName, '' ]
-        S3orAPI:
-          !Ref S3orAPI
-        RedcapS3Bucket:
-          !Ref RedcapS3Bucket
-        RedcapS3Key:
-          !Ref RedcapS3Key
-        RedcapS3BucketRegion:
-          !Ref RedcapS3BucketRegion
-        RedcapUname:
-          !Ref RedcapUname
-        RedcapPword:
-          !Ref RedcapPword
-        Redcapver:
-          !Ref Redcapver
-        EC2KeyName:
-          !Ref EC2KeyName
+        S3orAPI: !Ref S3orAPI
+        RedcapS3Bucket: !Ref RedcapS3Bucket
+        RedcapS3Key: !Ref RedcapS3Key
+        RedcapS3BucketRegion: !Ref RedcapS3BucketRegion
+        RedcapUname: !Ref RedcapUname
+        RedcapPword: !Ref RedcapPword
+        Redcapver: !Ref Redcapver
+        EC2KeyName: !Ref EC2KeyName
         VPCId:
           !GetAtt 'VPCStack.Outputs.VPCId'
         SubnetPublicA:
