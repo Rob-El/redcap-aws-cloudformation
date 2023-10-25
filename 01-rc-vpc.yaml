@@ -295,7 +295,7 @@ Resources:
         rules_to_suppress:
           - id: W33
             reason: "This is a public subnet required to use Public IPs"    
-                      
+
   REDCapPublicBSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -747,7 +747,7 @@ Resources:
     DependsOn: REDCapGWAttachment
 
   REDCapEdgeRouteGatewayRouteTableAssociation:
-    Type: AWS::EC2::Route
+    Type: AWS::EC2::GatewayRouteTableAssociation
     Properties:
       GatewayId: !Ref REDCapIGw
       RouteTableId: !Ref REDCapEdgeRouteTable
