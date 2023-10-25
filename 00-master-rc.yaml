@@ -72,6 +72,7 @@ Metadata:
         - GWLB1CIDR
         - GWLB2CIDR
         - VpcEndpointService
+        - TransitGW
     
     ParameterLabels:
       EC2KeyName:
@@ -150,7 +151,9 @@ Metadata:
       GWLB2CIDR:
         default: GWLB Subnet B CIDR Range
       VpcEndpointService:
-        default: VPC Endpoint Service 
+        default: VPC Endpoint Service
+      TransitGW:
+        default: VPC Transit Gateway
 
 
 
@@ -163,7 +166,7 @@ Parameters:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Description: 'The CIDR IP range that is permitted to access your REDCap servers. Note: A value of 0.0.0.0/0 will allow access from ANY IP address.'
     Type: String
-    Default: 0.0.0.0/0
+    Default: 157.242.0.0/16
 
 
   EBEndpoint:
@@ -173,6 +176,7 @@ Parameters:
     MaxLength: 40
     MinLength: 4    
     Type: String
+    Default: temp-redcap
   UseRoute53Boolean:
     AllowedValues:
       - true
@@ -204,6 +208,7 @@ Parameters:
   SESUsername:
     Type: String
     Description: '[ Required ] Username to use for authentication to SES.'
+    Default: AKIAVBBSJVSAL35PB4WU
   SESPassword:
     Type: String
     Description: '[ Required ] Password to use for authentication to SES.'
@@ -230,6 +235,7 @@ Parameters:
       - eu-north-1
       - sa-east-1
       - us-gov-west-1 
+    Default: us-west-2
     Description: Region where you configured your SES credentials.
 
 
@@ -313,8 +319,6 @@ Parameters:
   
   PHPVersion:
     AllowedValues:
-      - 7.2
-      - 7.3
       - 7.4
       - 8.0
       - 8.1
@@ -363,6 +367,7 @@ Parameters:
   RedcapUname:
     Description: Your REDCap Community Username (used if 'Download using REDCap API' is selected)
     Type: String
+    Default: david.scozzaro
   RedcapPword:
     Description: Your REDCap Community Password (used if 'Download using REDCap API' is selected)
     Type: String
@@ -420,7 +425,11 @@ Parameters:
   VpcEndpointService:
     Description: VPC Endpoint Service for REDCap account
     Type: String
-    Default: vpce-svc-04c4882b05a462f15    
+    Default: vpce-svc-04c4882b05a462f15
+  TransitGW:
+    Description: VPC Transit Gateway
+    Type: String
+    Default: tgw-064dd6ec4c0815b0d
 
 
 
@@ -475,6 +484,7 @@ Resources:
         GWLB2CIDR: !Ref GWLB2CIDR
         EBEndpoint: !Ref EBEndpoint
         VpcEndpointService: !Ref VpcEndpointService
+        TransitGW: !Ref TransitGW
       Tags:      
         - Key: Name
           Value: !Sub ${EBEndpoint}-cloudformation-stack
@@ -488,7 +498,7 @@ Resources:
           Value: !Sub ${EBEndpoint}-cloudformation-stack    
 
   redcapelasticbeanstalk:
-    DependsOn: [ VPCStack ]
+    # DependsOn: [ VPCStack ]
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
@@ -552,7 +562,7 @@ Resources:
           !GetAtt 'VPCStack.Outputs.TempEC2InstanceProfile'
       TemplateURL: https://s3.amazonaws.com/lmu-redcap-aws-cloudformation/02-rc-elasticbeanstalk.yaml
       Tags:      
-        - Key: Name
+        - Key: LMUName # EB Stack breaks if we use "Name"
           Value: !Sub ${EBEndpoint}-cloudformation-stack
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
