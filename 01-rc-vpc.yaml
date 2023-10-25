@@ -596,7 +596,7 @@ Resources:
       VpcId: !Ref REDCapVPC
       Tags:
         - Key: Name
-          Value: !Sub ${EBEndpoint} Public
+          Value: !Sub ${EBEndpoint} Public-a
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
@@ -612,7 +612,7 @@ Resources:
       VpcId: !Ref REDCapVPC
       Tags:
         - Key: Name
-          Value: !Sub ${EBEndpoint} Public
+          Value: !Sub ${EBEndpoint} Public-b
         - Key: Owner
           Value: David.Scozzaro@lmu.edu
         - Key: Team
