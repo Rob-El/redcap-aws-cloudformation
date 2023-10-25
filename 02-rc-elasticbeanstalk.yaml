@@ -120,8 +120,6 @@ Parameters:
     Type: String
   PHPVersion:
     AllowedValues:
-      - 7.2
-      - 7.3
       - 7.4
       - 8.0
       - 8.1
@@ -596,12 +594,13 @@ Resources:
       MasterUserPassword: !Ref DatabaseMasterPassword
       DatabaseName: 'redcap'
       Engine: aurora-mysql
+      EngineVersion: 5.7
       StorageEncrypted: 'True'
       Port: 3306
       DBSubnetGroupName:
         Ref: RDSDBSubnets
-      DBClusterParameterGroupName:
-        Ref: RDSDBClusterParameterGroup
+      # DBClusterParameterGroupName:
+      #   Ref: RDSDBClusterParameterGroup
       VpcSecurityGroupIds:
         - !Ref SGData
   RDSDBInstance1:
@@ -609,8 +608,8 @@ Resources:
     Properties:
       DBSubnetGroupName:
         Ref: RDSDBSubnets
-      DBParameterGroupName:
-        Ref: RDSDBParameterGroup
+      # DBParameterGroupName:
+      #   Ref: RDSDBParameterGroup
       Engine: aurora-mysql
       DBClusterIdentifier:
         Ref: RDSCluster
@@ -623,27 +622,27 @@ Resources:
     Properties:
       DBSubnetGroupName:
         Ref: RDSDBSubnets
-      DBParameterGroupName:
-        Ref: RDSDBParameterGroup
+      # DBParameterGroupName:
+      #   Ref: RDSDBParameterGroup
       Engine: aurora-mysql
       DBClusterIdentifier:
         Ref: RDSCluster
       PubliclyAccessible: 'false'
       DBInstanceClass: !Ref DatabaseInstanceType
-  RDSDBClusterParameterGroup:
-    Type: AWS::RDS::DBClusterParameterGroup
-    Properties:
-      Description: CloudFormation Sample Aurora Cluster Parameter Group
-      Family: aurora-mysql5.7
-      Parameters:
-        time_zone: US/Eastern
-  RDSDBParameterGroup:
-    Type: AWS::RDS::DBParameterGroup
-    Properties:
-      Description: CloudFormation Sample Aurora Parameter Group
-      Family: aurora-mysql5.7
-      Parameters:
-        sql_mode: IGNORE_SPACE
+  # RDSDBClusterParameterGroup:
+  #   Type: AWS::RDS::DBClusterParameterGroup
+  #   Properties:
+  #     Description: CloudFormation Sample Aurora Cluster Parameter Group
+  #     Family:  aurora-mysql5.7
+  #     Parameters:
+  #       time_zone: US/Eastern
+  # RDSDBParameterGroup:
+  #   Type: AWS::RDS::DBParameterGroup
+  #   Properties:
+  #     Description: CloudFormation Sample Aurora Parameter Group
+  #     Family:  aurora-mysql5.7
+  #     Parameters:
+  #       sql_mode: IGNORE_SPACE
   RDSDBSubnets:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
