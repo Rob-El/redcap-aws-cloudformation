@@ -722,14 +722,6 @@ Resources:
         - Key: InfrastructureFunction
           Value: !Sub ${EBEndpoint}-public-routetable
 
-  REDCapEdgeRouteLocal:
-    Type: AWS::EC2::Route
-    Properties:
-      DestinationCidrBlock: !Ref VPCcidr
-      RouteTableId: !Ref REDCapEdgeRouteTable
-      VpcEndpointId: !Ref GwlbEndpoint1
-    DependsOn: REDCapGWAttachment                 
-
   REDCapEdgeRouteVPCeA:
     Type: AWS::EC2::Route
     Properties:
