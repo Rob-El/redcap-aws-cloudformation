@@ -91,6 +91,10 @@ Parameters:
     Description: VPC Endpoint Service for REDCap account
     Type: String
     Default: vpce-svc-04c4882b05a462f15
+  TransitGW:
+    Description: VPC Transit Gateway
+    Type: String
+    Default: tgw-064dd6ec4c0815b0d    
 
 
 
@@ -105,6 +109,7 @@ Conditions:
   NoDeployACM: !Or
     - !Equals [ false, !Ref UseACMBoolean ]
     - !Equals [ false, !Ref UseRoute53Boolean ]
+  IsChina: !Equals [ !Sub '${AWS::URLSuffix}', 'amazonaws.com.cn']    
 
 Resources:
   REDCapVPC:
@@ -124,7 +129,17 @@ Resources:
         - Key: ApplicationName
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-vpc          
+          Value: !Sub ${EBEndpoint}-vpc
+
+  REDCapVPCTGwAttach:
+    DependsOn: REDCapDataASubnet
+    Type: AWS::EC2::TransitGatewayAttachment
+    Properties:
+      SubnetIds:
+        - !Ref REDCapDataASubnet
+        - !Ref REDCapDataBSubnet
+      TransitGatewayId: !Ref TransitGW
+      VpcId: !Ref REDCapVPC
 
 
 #Defines Internet Connectivity
@@ -274,7 +289,13 @@ Resources:
         - Key: ApplicationName
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-subnet-public-a          
+          Value: !Sub ${EBEndpoint}-subnet-public-a
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W33
+            reason: "This is a public subnet required to use Public IPs"    
+                      
   REDCapPublicBSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -293,6 +314,11 @@ Resources:
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
           Value: !Sub ${EBEndpoint}-subnet-public-b
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W33
+            reason: "This is a public subnet required to use Public IPs"              
           
   REDCapGWLBASubnet:
     Type: AWS::EC2::Subnet
@@ -311,7 +337,13 @@ Resources:
         - Key: ApplicationName
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-subnet-gwlb-a          
+          Value: !Sub ${EBEndpoint}-subnet-gwlb-a
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W33
+            reason: "This is a public subnet required to use Public IPs"              
+
   REDCapGWLBBSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -329,7 +361,12 @@ Resources:
         - Key: ApplicationName
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-subnet-bwlb-b               
+          Value: !Sub ${EBEndpoint}-subnet-bwlb-b
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W33
+            reason: "This is a public subnet required to use Public IPs"                    
   
 
 
@@ -350,6 +387,11 @@ Resources:
           FromPort: '80'
           ToPort: '80'
           CidrIp: !Ref 'AccessCidr'
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1          
       Tags:
         - Key: Name
           Value: !Sub ${EBEndpoint} Public Security Group
@@ -360,7 +402,16 @@ Resources:
         - Key: ApplicationName
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-public-sg             
+          Value: !Sub ${EBEndpoint}-public-sg
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W5
+            reason: "Generally LMU allows hosts to access whatever site is needed"
+          - id: W36
+            reason: "These Security Group rules should be obvious and not require explanation"
+          - id: W40
+            reason: "Only IpProtocol of -1 in use should be for egress rule"                 
 
   PublicSGNoSSL:
     Condition: NoDeployACM
@@ -378,6 +429,11 @@ Resources:
           FromPort: '80'
           ToPort: '80'
           CidrIp: !Ref 'AccessCidr'
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1          
       Tags:
         - Key: Name
           Value: !Sub ${EBEndpoint} Public Security Group
@@ -389,12 +445,26 @@ Resources:
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
           Value: !Sub ${EBEndpoint}-public-sg
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W5
+            reason: "Generally LMU allows hosts to access whatever site is needed"
+          - id: W36
+            reason: "These Security Group rules should be obvious and not require explanation"
+          - id: W40
+            reason: "Only IpProtocol of -1 in use should be for egress rule"               
 
   AppSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group for Application Servers
       VpcId: !Ref 'REDCapVPC'
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1          
       Tags:
         - Key: Name
           Value: !Sub ${EBEndpoint} App Security Group
@@ -406,6 +476,15 @@ Resources:
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
           Value: !Sub ${EBEndpoint}-app-sg
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W5
+            reason: "Generally LMU allows hosts to access whatever site is needed"
+          - id: W36
+            reason: "These Security Group rules should be obvious and not require explanation"
+          - id: W40
+            reason: "Only IpProtocol of -1 in use should be for egress rule"              
 
   DataSG:
     Type: AWS::EC2::SecurityGroup
@@ -413,10 +492,15 @@ Resources:
       GroupDescription: Security Group for Databases
       VpcId: !Ref 'REDCapVPC'
       SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: '3306'
-        ToPort: '3306'
-        SourceSecurityGroupId: !Ref 'AppSG'
+        - IpProtocol: tcp
+          FromPort: '3306'
+          ToPort: '3306'
+          SourceSecurityGroupId: !Ref 'AppSG'
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1        
       Tags:
         - Key: Name
           Value: !Sub ${EBEndpoint} DB Security Group
@@ -427,22 +511,32 @@ Resources:
         - Key: ApplicationName
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-db-sg            
+          Value: !Sub ${EBEndpoint}-db-sg
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W5
+            reason: "Generally LMU allows hosts to access whatever site is needed"
+          - id: W36
+            reason: "These Security Group rules should be obvious and not require explanation"
+          - id: W40
+            reason: "Only IpProtocol of -1 in use should be for egress rule"                       
 
 
   
 #Route tables and route definitions for the three tiered network architecture
   REDCapPrivateRoute:
+    DependsOn: REDCapVPCTGwAttach
     Type: AWS::EC2::Route
     Properties:
-      RouteTableId: !Ref 'REDCapPrivateRouteTable'
+      RouteTableId: !Ref REDCapPrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref 'NAT'
+      TransitGatewayId: !Ref TransitGW
 
   REDCapPrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref 'REDCapVPC'
+      VpcId: !Ref REDCapVPC
       Tags:
         - Key: Name
           Value: !Sub ${EBEndpoint} Private
@@ -480,18 +574,26 @@ Resources:
       SubnetId: !Ref 'REDCapAppBSubnet'             
 
 
-  REDCapPublicRoute:
+  REDCapPublicARoute:
     Type: AWS::EC2::Route
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
-      RouteTableId: !Ref 'REDCapPublicRouteTable'
-      GatewayId: !Ref 'REDCapIGw'
-    DependsOn: REDCapGWAttachment         
+      RouteTableId: !Ref 'REDCapPublicARouteTable'
+      VpcEndpointId: !Ref GwlbEndpoint1
+    DependsOn: REDCapGWAttachment
 
-  REDCapPublicRouteTable:
+  REDCapPublicBRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref 'REDCapPublicBRouteTable'
+      VpcEndpointId: !Ref GwlbEndpoint2
+    DependsOn: REDCapGWAttachment           
+
+  REDCapPublicARouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref 'REDCapVPC'
+      VpcId: !Ref REDCapVPC
       Tags:
         - Key: Name
           Value: !Sub ${EBEndpoint} Public
@@ -502,18 +604,34 @@ Resources:
         - Key: ApplicationName
           Value: !Sub ${EBEndpoint}
         - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-public-routetable            
+          Value: !Sub ${EBEndpoint}-public-a-routetable
+
+  REDCapPublicBRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref REDCapVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EBEndpoint} Public
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-public-b-routetable            
 
   REDCapPublicSubnetARoute:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref 'REDCapPublicRouteTable'
+      RouteTableId: !Ref 'REDCapPublicARouteTable'
       SubnetId: !Ref 'REDCapPublicASubnet'          
 
   REDCapPublicSubnetBRoute:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref 'REDCapPublicRouteTable'
+      RouteTableId: !Ref 'REDCapPublicBRouteTable'
       SubnetId: !Ref 'REDCapPublicBSubnet'
 
 # GWLB routes and route tables      
@@ -585,6 +703,55 @@ Resources:
       VpcEndpointType: GatewayLoadBalancer
       SubnetIds:
         - !Ref REDCapGWLBBSubnet
+
+# Edge Associated Route Table
+
+  REDCapEdgeRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'REDCapVPC'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EBEndpoint} Edge-associated
+        - Key: Owner
+          Value: David.Scozzaro@lmu.edu
+        - Key: Team
+          Value: ResearchEducation
+        - Key: ApplicationName
+          Value: !Sub ${EBEndpoint}
+        - Key: InfrastructureFunction
+          Value: !Sub ${EBEndpoint}-public-routetable
+
+  REDCapEdgeRouteLocal:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: !Ref VPCcidr
+      RouteTableId: !Ref REDCapEdgeRouteTable
+      VpcEndpointId: !Ref GwlbEndpoint1
+    DependsOn: REDCapGWAttachment                 
+
+  REDCapEdgeRouteVPCeA:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: !Ref p1cidr
+      RouteTableId: !Ref REDCapEdgeRouteTable
+      VpcEndpointId: !Ref GwlbEndpoint1
+    DependsOn: REDCapGWAttachment  
+
+  REDCapEdgeRouteLocalVPCeB:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: !Ref p2cidr
+      RouteTableId: !Ref REDCapEdgeRouteTable
+      VpcEndpointId: !Ref GwlbEndpoint2
+    DependsOn: REDCapGWAttachment
+
+  REDCapEdgeRouteGatewayRouteTableAssociation:
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref REDCapIGw
+      RouteTableId: !Ref REDCapEdgeRouteTable
+    DependsOn: REDCapGWAttachment      
 
 
 
@@ -768,6 +935,15 @@ Resources:
                   - "elasticloadbalancing:DescribeLoadBalancers"
                 Effect: Allow
                 Resource: '*'
+# To support Enhanced health authorization in AWS
+              - Sid: ElasticBeanstalkHealthAccess
+                Action:
+                  - "elasticbeanstalk:PutInstanceStatistics"
+                Effect: Allow
+                Resource: 
+                  -  "arn:aws:elasticbeanstalk:*:*:application/*"
+                  -  "arn:aws:elasticbeanstalk:*:*:environment/*"
+##  
       Path: /
       Tags:      
         - Key: Name
@@ -927,7 +1103,7 @@ Resources:
       Timeout: 300
       Role: !GetAtt REDCapCleanUpDefaultSGFunctionRole.Arn
       Layers:
-        - "arn:aws:lambda:us-west-2:905652290449:layer:LMUBaseline-python-library:5"      
+        - "arn:aws:lambda:us-west-2:905652290449:layer:LMUBaseline-python-library:6"      
       Code:
         ZipFile: |
           import boto3 
