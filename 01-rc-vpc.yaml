@@ -165,39 +165,40 @@ Resources:
       InternetGatewayId: !Ref 'REDCapIGw'
 
 #Defines NAT Gateway so that the Elastic Beanstalk servers and the temporary EC2 server can talk to the Internet
-  NAT:
-    DependsOn: REDCapGWAttachment
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt 'EIP.AllocationId'
-      SubnetId: !Ref 'REDCapPublicASubnet'
-      Tags:      
-        - Key: Name
-          Value: !Sub ${EBEndpoint}-nat-gw
-        - Key: Owner
-          Value: David.Scozzaro@lmu.edu
-        - Key: Team
-          Value: ResearchEducation
-        - Key: ApplicationName
-          Value: !Sub ${EBEndpoint}
-        - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-nat-gw     
+# This should no longer be needed with Transit Gateway.
+  # NAT:
+  #   DependsOn: REDCapGWAttachment
+  #   Type: AWS::EC2::NatGateway
+  #   Properties:
+  #     AllocationId: !GetAtt 'EIP.AllocationId'
+  #     SubnetId: !Ref 'REDCapPublicASubnet'
+  #     Tags:      
+  #       - Key: Name
+  #         Value: !Sub ${EBEndpoint}-nat-gw
+  #       - Key: Owner
+  #         Value: David.Scozzaro@lmu.edu
+  #       - Key: Team
+  #         Value: ResearchEducation
+  #       - Key: ApplicationName
+  #         Value: !Sub ${EBEndpoint}
+  #       - Key: InfrastructureFunction
+  #         Value: !Sub ${EBEndpoint}-nat-gw     
 
-  EIP:
-    Type: AWS::EC2::EIP
-    Properties:
-      Domain: vpc
-      Tags:      
-        - Key: Name
-          Value: !Sub ${EBEndpoint}-eip
-        - Key: Owner
-          Value: David.Scozzaro@lmu.edu
-        - Key: Team
-          Value: ResearchEducation
-        - Key: ApplicationName
-          Value: !Sub ${EBEndpoint}
-        - Key: InfrastructureFunction
-          Value: !Sub ${EBEndpoint}-eip
+  # EIP:
+  #   Type: AWS::EC2::EIP
+  #   Properties:
+  #     Domain: vpc
+  #     Tags:      
+  #       - Key: Name
+  #         Value: !Sub ${EBEndpoint}-eip
+  #       - Key: Owner
+  #         Value: David.Scozzaro@lmu.edu
+  #       - Key: Team
+  #         Value: ResearchEducation
+  #       - Key: ApplicationName
+  #         Value: !Sub ${EBEndpoint}
+  #       - Key: InfrastructureFunction
+  #         Value: !Sub ${EBEndpoint}-eip
 
   #Defines two availability zones of subnets for the three tier network architecture
 
@@ -373,7 +374,7 @@ Resources:
 #Security Groups for the three tiered network architecture
   PublicSGSSL:
     Condition: DeployACM
-    DependsOn: EIP
+    DependsOn: REDCapVPCTGwAttach
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group for Load Balancers
@@ -415,7 +416,7 @@ Resources:
 
   PublicSGNoSSL:
     Condition: NoDeployACM
-    DependsOn: EIP
+    DependsOn: REDCapVPCTGwAttach
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group for Load Balancers

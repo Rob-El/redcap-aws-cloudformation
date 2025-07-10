@@ -274,7 +274,8 @@ Resources:
       - EC2WaitCondition
       - RDSDBInstance1   
     Properties:
-      Description: Project Redcap PHP servers
+      Description: Project Redcap Elastic Beanstalk
+      ApplicationName: !Ref EBEndpoint
  
  
   RCAppNoMultiAZDBVersion:
@@ -296,7 +297,8 @@ Resources:
       - RDSDBInstance1
       - RDSDBInstance2
     Properties:
-      Description: Project Redcap PHP servers
+      Description: Project Redcap Elastic Beanstalk
+      ApplicationName: !Ref EBEndpoint      
  
   RCAppMultiAZDBVersion:
     Type: 'AWS::ElasticBeanstalk::ApplicationVersion'
@@ -448,6 +450,9 @@ Resources:
         - Namespace: aws:elasticbeanstalk:cloudwatch:logs
           OptionName: RetentionInDays
           Value: 7
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: TZ
+          Value: "America/Los_Angeles"              
 
 
 
@@ -582,6 +587,9 @@ Resources:
         - Namespace: aws:elasticbeanstalk:cloudwatch:logs
           OptionName: RetentionInDays
           Value: 7
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: TZ
+          Value: "America/Los_Angeles"          
 
 
 
@@ -589,60 +597,76 @@ Resources:
 # Deploys the RDS Aurora Postgres cluster used to store the application data for WebAPI.
   RDSCluster:
     Type: AWS::RDS::DBCluster
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
     Properties:
+      BacktrackWindow: 86400
+      BackupRetentionPeriod: 35
+      CopyTagsToSnapshot: true
+      DeletionProtection: true
       MasterUsername: 'master'
       MasterUserPassword: !Ref DatabaseMasterPassword
-      DatabaseName: 'redcap'
+      DatabaseName: redcap
       Engine: aurora-mysql
       EngineVersion: 5.7
-      StorageEncrypted: 'True'
+      StorageEncrypted: true
+      PreferredBackupWindow: 08:00-08:30
+      PreferredMaintenanceWindow: Fri:09:00-Fri:09:30
       Port: 3306
       DBSubnetGroupName:
         Ref: RDSDBSubnets
-      # DBClusterParameterGroupName:
-      #   Ref: RDSDBClusterParameterGroup
+      DBClusterParameterGroupName:
+        Ref: RDSDBClusterParameterGroup
       VpcSecurityGroupIds:
         - !Ref SGData
   RDSDBInstance1:
     Type: AWS::RDS::DBInstance
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
     Properties:
       DBSubnetGroupName:
         Ref: RDSDBSubnets
-      # DBParameterGroupName:
-      #   Ref: RDSDBParameterGroup
+      DBParameterGroupName:
+        Ref: RDSDBParameterGroup
       Engine: aurora-mysql
       DBClusterIdentifier:
         Ref: RDSCluster
-      PubliclyAccessible: 'false'
+      PubliclyAccessible: false
       DBInstanceClass: !Ref DatabaseInstanceType
 # Only create the second instance if the user specified a Multi-AZ Database  
   RDSDBInstance2:
     Condition: DeployMultiAZDB
     Type: AWS::RDS::DBInstance
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
     Properties:
       DBSubnetGroupName:
         Ref: RDSDBSubnets
-      # DBParameterGroupName:
-      #   Ref: RDSDBParameterGroup
+      DBParameterGroupName:
+        Ref: RDSDBParameterGroup
       Engine: aurora-mysql
       DBClusterIdentifier:
         Ref: RDSCluster
-      PubliclyAccessible: 'false'
+      PubliclyAccessible: false
       DBInstanceClass: !Ref DatabaseInstanceType
-  # RDSDBClusterParameterGroup:
-  #   Type: AWS::RDS::DBClusterParameterGroup
-  #   Properties:
-  #     Description: CloudFormation Sample Aurora Cluster Parameter Group
-  #     Family:  aurora-mysql5.7
-  #     Parameters:
-  #       time_zone: US/Eastern
-  # RDSDBParameterGroup:
-  #   Type: AWS::RDS::DBParameterGroup
-  #   Properties:
-  #     Description: CloudFormation Sample Aurora Parameter Group
-  #     Family:  aurora-mysql5.7
-  #     Parameters:
-  #       sql_mode: IGNORE_SPACE
+  RDSDBClusterParameterGroup:
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties:
+      DBClusterParameterGroupName: !Sub ${EBEndpoint}-cluster-aurora-mysql5-7
+      Description: REDCap Aurora Cluster Parameter Group
+      Family:  aurora-mysql5.7
+      Parameters:
+        query_cache_limit: 16777216
+        max_allowed_packet: 1073741824
+  RDSDBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      DBParameterGroupName: !Sub ${EBEndpoint}-aurora-mysql5-7
+      Description: REDCap Aurora Parameter Group
+      Family:  aurora-mysql5.7
+      Parameters:
+        query_cache_limit: 16777216
+        max_allowed_packet: 1073741824
   RDSDBSubnets:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
@@ -819,9 +843,7 @@ Resources:
                     sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 32M/" /etc/php.ini
                     sed -i "s/post_max_size = 8M/post_max_size = 32M/" /etc/php.ini
 
-                    if [ ${Protocol} == 'https://' ]; then
-                      echo "session.cookie_secure = on" >> /etc/php.ini
-                    fi
+                    echo "session.cookie_secure = on" >> /etc/php.ini
 
                     systemctl restart nginx
                     systemctl restart php-fpm
